@@ -1,7 +1,7 @@
 /*
 *	KeyCode mapping. arrow keys for controlling the snake
 */
-Direction = (function () {
+;Direction = (function () {
 	return {
 		LEFT: 37,
 		UP: 38,
