@@ -29,8 +29,6 @@ document.body.appendChild( canvas );
 
 ;Game = (function () {
 
-	var startTextId = 'startText';
-
 	var ready = false;
 
 	function start () {
