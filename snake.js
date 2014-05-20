@@ -1,3 +1,18 @@
+(function () {
+	if ( !window.requestAnimationFrame ) {
+		window.requestAnimationFrame = ( function() {
+			return window.webkitRequestAnimationFrame ||
+			window.mozRequestAnimationFrame ||
+			window.oRequestAnimationFrame ||
+			window.msRequestAnimationFrame ||
+			function(callback) {
+				//gameloop fallbacks to 60fps
+				window.setTimeout( callback, 1000 / 60 );
+			};
+		})();
+	}
+})();
+
 var canvas,
 	context,
 	Game, 
@@ -11,131 +26,215 @@ canvas.height = 500;
 context = canvas.getContext( '2d' );
 document.body.appendChild( canvas );
 
-Game = {
-	clearMap: function () {
-		context.clearRect(0, 0, canvas.width, canvas.height);
+
+
+
+;Game = (function () {
+
+	var startTextId = 'startText';
+
+	var ready = false;
+
+	function start () {
+		ready = true;
 	}
-};
+
+	function stop () {
+		ready = false;
+	}
+
+	return {
+		// initial FPS/Speed of the game
+		FPS: 5,
+
+		start: start,
+
+		stop: stop,
+
+		isReady: function isReady () {
+			return ready;
+		},
+
+		clearMap: function clearMap () {
+			context.clearRect(0, 0, canvas.width, canvas.height);
+		},
+
+		showStartText: function showStartText () {
+			context.font = "bold 35px sans-serif";
+			context.fillText("Press space bar to start!", canvas.width / 10, canvas.height / 2);
+		},
+	};
+}());
+
+;Direction = (function () {
+	return {
+		// keycode mappings for the arrow keys
+		LEFT: 37,
+		UP: 38,
+		RIGHT: 39,
+		DOWN: 40,
+	};
+}());
 
 
-Snake = {
 
-	segmentSize: 10,
 
-	segmentCount: 5,
+;Snake = (function () {
 
-	segments: [],
+	//size of a single segment
+	var segmentSize = 10;
 
-	direction: Direction.RIGHT,
+	//initial size of the snake
+	var segmentCount = 5;
 
-	head : function () {
-		return this.segments[0];
-	},
+	//a queue data struct for the body of the snake
+	var segments = [];
 
-	fillSegment : function (segment) {
-		context.fillStyle = '#FF0000';
-		context.fillRect(segment.x * this.segmentSize, segment.y * this.segmentSize, this.segmentSize, this.segmentSize);
-	},
+	//RIGHT = initial direction of snake
+	var direction = Direction.RIGHT;
 
-	getNextHead : function (direction) {
-		var x = this.head().x;
-		var y = this.head().y;
-		switch (this.direction) {
+	var newDirection = Direction.RIGHT;
+
+	var snakeColor = '#FFFFFF';
+
+	function head () {
+		return segments[0];
+	};
+
+	function fillSegment (segment) {
+		context.fillStyle = snakeColor;
+		context.fillRect(segment.x * segmentSize, segment.y * segmentSize, segmentSize, segmentSize);
+	};
+
+	function getNextHeadBasedOnDirection () {
+		var x = head().x;
+		var y = head().y;
+		switch (newDirection) {
 			case Direction.RIGHT:
-				x++;
+				if (direction !== Direction.LEFT) {
+					x++;
+					direction = newDirection;
+				}
 				break;
 			case Direction.LEFT:
-				x--;
+				if (direction != Direction.RIGHT) {
+					x--;
+					direction = newDirection;
+				}
 				break;
 			case Direction.UP:
-				y--;
+				if (direction !== Direction.DOWN) {
+					y--;
+					direction = newDirection;
+				}
 				break;
 			case Direction.DOWN:
-				y++
+				if (direction !== Direction.UP) {
+					y++;
+					direction = newDirection;
+				}
 				break;
 			default:
 				break;
 		};
 		return {x: x, y: y};
-	},
+	};
+
+	function setDirection (keyCode) {
+		switch (keyCode) {
+			case Direction.RIGHT:
+				if (direction !== Direction.LEFT) {
+					newDirection = Direction.RIGHT;
+				}
+				break;
+			case Direction.LEFT:
+				if (direction != Direction.RIGHT) {
+					newDirection = Direction.LEFT;
+				}
+				break;
+			case Direction.UP:
+				if (direction !== Direction.DOWN) {
+					newDirection = Direction.UP;
+				}
+				break;
+			case Direction.DOWN:
+				if (direction !== Direction.UP) {
+					newDirection = Direction.DOWN;
+				}
+				break;
+			default:
+				break;
+		};
+	};
 
 	/*
-	*	updates the values of snake such as direction, etc etc. according to user-input
+	*	updates the values of snake such as direction, etc etc. 
+	* 	according to user-input
 	*/
-	update : function () {
-		var nextHead = this.getNextHead(this.direction);
-		var tail = this.segments.pop();
+	function update () {
+		var nextHead = getNextHeadBasedOnDirection();
+		var tail = segments.pop();
 		tail.x = nextHead.x;
 		tail.y = nextHead.y;
-		this.segments.unshift(tail);
-	},
+		segments.unshift(tail);
+	};
 
 	/*
 	*	draws the snake using the updated values
 	*/
-	draw : function () {
-		for (var i = this.segments.length - 1; i >= 0; i--) {
-			this.fillSegment(this.segments[i]);
+	function draw () {
+		for (var i = segments.length - 1; i >= 0; i--) {
+			fillSegment(segments[i]);
 		};
-	},
+	};
 
-	init : function () {
-		for (var i = this.segmentCount - 1; i >= 0; i--) {
-			this.segments.push({x: i, y: 0});
+	function init () {
+		for (var i = segmentCount - 1; i >= 0; i--) {
+			segments.push({x: i, y: 0});
 		};
-	}
+	};
 
-};
+	return {
+		update: update,
+		draw: draw,
+		init: init,
+		setDirection: setDirection
+	};
+
+})();
+
+
+
 
 var registerKeyListeners = function() {
 	document.addEventListener('keydown', function(e) {
 		if (32 === e.keyCode) {
-			clearTimeout(timeOutId);
+			Game.start();
 		}
-		switch (e.keyCode) {
-			case Direction.LEFT:
-				if (Snake.direction === Direction.RIGHT) {
-					break;
-				}
-				Snake.direction = Direction.LEFT;
-				break;
-			case Direction.RIGHT:
-				if (Snake.direction === Direction.LEFT) {
-					break;
-				}
-				Snake.direction = Direction.RIGHT;
-				break;
-			case Direction.UP:
-				if (Snake.direction === Direction.DOWN) {
-					break;
-				}
-				Snake.direction = Direction.UP;
-				break;
-			case Direction.DOWN:
-				if (Snake.direction === Direction.UP) {
-					break;
-				}
-				Snake.direction = Direction.DOWN;
-				break;
-			default:
-				console.log('taena');
-				break;
-		};
+		Snake.setDirection(e.keyCode);
 	}, false);
 };
 
-var fps = 5;
+
 var gameLoop = function() {
 	setTimeout(function () {
 		requestAnimationFrame(gameLoop);
 
-		Game.clearMap();
-		Snake.update();
-		Snake.draw();
-
-	}, 1000 / fps);
+		if (Game.isReady()) {
+			Game.clearMap();
+			Snake.update();
+			Snake.draw();
+		} else {
+			Game.showStartText();
+		}
+		
+	}, 1000 / Game.FPS);
 };
 
+
 registerKeyListeners();
+
 Snake.init();
+Snake.draw();
+
 gameLoop();
