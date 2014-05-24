@@ -41,7 +41,7 @@ document.body.appendChild( canvas );
 
 	return {
 		// initial FPS/Speed of the game
-		FPS: 5,
+		FPS: 10,
 
 		start: start,
 
@@ -52,7 +52,15 @@ document.body.appendChild( canvas );
 		},
 
 		clearMap: function clearMap () {
-			context.clearRect(0, 0, canvas.width, canvas.height);
+			context.fillStyle = '#0D0D0D';
+			context.strokeStyle = '#000F03';
+			for (var x = canvas.width - 1; x >= 0; x--) {
+				for (var y = canvas.height - 1; y >= 0; y--) {
+					context.fillRect(x * 10, y * 10, 10, 10);
+				    context.lineWidth = .5;
+				    context.strokeRect(x * 10, y * 10, 10, 10);		
+				};
+			};
 		},
 
 		showStartText: function showStartText () {
@@ -99,7 +107,7 @@ document.body.appendChild( canvas );
 
 	function fillSegment (segment) {
 		context.fillStyle = snakeColor;
-		context.fillRect(segment.x * segmentSize, segment.y * segmentSize, segmentSize, segmentSize);
+		context.fillRect(segment.x * segmentSize, segment.y * segmentSize, segmentSize, segmentSize);				
 	};
 
 	function getNextHeadBasedOnDirection () {
@@ -163,6 +171,15 @@ document.body.appendChild( canvas );
 		};
 	};
 
+	function init () {
+		segments = [];
+		direction = Direction.RIGHT;
+		newDirection = Direction.RIGHT;
+		for (var i = segmentCount - 1; i >= 0; i--) {
+			segments.push({x: i, y: 0});
+		};
+	};
+
 	/*
 	*	updates the values of snake such as direction, etc etc. 
 	* 	according to user-input
@@ -184,17 +201,25 @@ document.body.appendChild( canvas );
 		};
 	};
 
-	function init () {
-		for (var i = segmentCount - 1; i >= 0; i--) {
-			segments.push({x: i, y: 0});
+	function collided () {
+		var nextHead = getNextHeadBasedOnDirection();
+		var collided = false;
+		for (var i = segments.length - 1; i >= 0; i--) {
+			var s = segments[i];
+			if (nextHead.x === s.x && nextHead.y === s.y) {
+				collided = true;
+				break;
+			}
 		};
-	};
+		return collided;
+	}
 
 	return {
 		update: update,
 		draw: draw,
 		init: init,
-		setDirection: setDirection
+		setDirection: setDirection,
+		collided: collided
 	};
 
 })();
@@ -214,13 +239,19 @@ var registerKeyListeners = function() {
 
 var gameLoop = function() {
 	setTimeout(function () {
-		requestAnimationFrame(gameLoop);
-
+		var requestId = requestAnimationFrame(gameLoop);
 		if (Game.isReady()) {
 			Game.clearMap();
-			Snake.update();
-			Snake.draw();
+			if (Snake.collided()) {
+				Game.stop();
+			} else {
+				Snake.update();
+				Snake.draw();
+			}
 		} else {
+			Game.clearMap();
+			Snake.init();
+			Snake.draw();
 			Game.showStartText();
 		}
 		
@@ -229,8 +260,5 @@ var gameLoop = function() {
 
 
 registerKeyListeners();
-
-Snake.init();
-Snake.draw();
 
 gameLoop();
