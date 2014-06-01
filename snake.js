@@ -11,6 +11,8 @@ if ( !window.requestAnimationFrame ) {
 	})();
 }
 
+
+
 var canvas,
 	context,
 	Game, 
@@ -18,12 +20,13 @@ var canvas,
 	Food,
 	Direction;
 
+
+
 canvas = document.createElement( 'canvas' );
 canvas.width = 500;
 canvas.height = 500;
 context = canvas.getContext( '2d' );
 document.body.appendChild( canvas );
-
 
 
 
@@ -41,7 +44,7 @@ document.body.appendChild( canvas );
 
 	return {
 		// initial FPS/Speed of the game
-		FPS: 10,
+		FPS: 20,
 
 		start: start,
 
@@ -56,19 +59,21 @@ document.body.appendChild( canvas );
 			context.strokeStyle = '#000F03';
 			for (var x = canvas.width - 1; x >= 0; x--) {
 				for (var y = canvas.height - 1; y >= 0; y--) {
-					context.fillRect(x * 10, y * 10, 10, 10);
+					context.fillRect(x * Snake.segmentSize, y * Snake.segmentSize, Snake.segmentSize, Snake.segmentSize);
 				    context.lineWidth = .5;
-				    context.strokeRect(x * 10, y * 10, 10, 10);		
+				    context.strokeRect(x * Snake.segmentSize, y * Snake.segmentSize, Snake.segmentSize, Snake.segmentSize);		
 				};
 			};
 		},
 
 		showStartText: function showStartText () {
 			context.font = "bold 35px sans-serif";
-			context.fillText("Press space bar to start!", canvas.width / 10, canvas.height / 2);
+			context.fillText("Press space bar to start!", canvas.width / Snake.segmentSize, canvas.height / 2);
 		},
 	};
 }());
+
+
 
 ;Direction = (function () {
 	return {
@@ -80,6 +85,11 @@ document.body.appendChild( canvas );
 	};
 }());
 
+
+
+;Food = (function () {
+
+}());
 
 
 
@@ -204,6 +214,8 @@ document.body.appendChild( canvas );
 	function collided () {
 		var nextHead = getNextHeadBasedOnDirection();
 		var collided = false;
+
+		//self collision
 		for (var i = segments.length - 1; i >= 0; i--) {
 			var s = segments[i];
 			if (nextHead.x === s.x && nextHead.y === s.y) {
@@ -211,6 +223,16 @@ document.body.appendChild( canvas );
 				break;
 			}
 		};
+
+		if (nextHead.x * segmentSize > canvas.width - segmentSize || nextHead.x < 0) {
+			collided = true;
+		}
+
+		if (nextHead.y * segmentSize > canvas.height - segmentSize || nextHead.y < 0) {
+			collided = true;
+		}
+
+
 		return collided;
 	}
 
@@ -219,7 +241,8 @@ document.body.appendChild( canvas );
 		draw: draw,
 		init: init,
 		setDirection: setDirection,
-		collided: collided
+		collided: collided,
+		segmentSize: segmentSize
 	};
 
 })();
@@ -235,6 +258,7 @@ var registerKeyListeners = function() {
 		Snake.setDirection(e.keyCode);
 	}, false);
 };
+
 
 
 var gameLoop = function() {
@@ -259,6 +283,6 @@ var gameLoop = function() {
 };
 
 
-registerKeyListeners();
 
+registerKeyListeners();
 gameLoop();
