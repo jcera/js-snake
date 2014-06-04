@@ -1,13 +1,13 @@
-if ( !window.requestAnimationFrame ) {
-	window.requestAnimationFrame = ( function() {
+if (!window.requestAnimationFrame) {
+	window.requestAnimationFrame = (function() {
 		return window.webkitRequestAnimationFrame ||
-		window.mozRequestAnimationFrame ||
-		window.oRequestAnimationFrame ||
-		window.msRequestAnimationFrame ||
-		function(callback) {
-			//gameloop fallbacks to 60fps
-			window.setTimeout( callback, 1000 / 60 );
-		};
+			window.mozRequestAnimationFrame ||
+			window.oRequestAnimationFrame ||
+			window.msRequestAnimationFrame ||
+			function(callback) {
+				//gameloop fallbacks to 60fps
+				window.setTimeout(callback, 1000 / 60);
+			};
 	})();
 }
 
@@ -15,67 +15,93 @@ if ( !window.requestAnimationFrame ) {
 
 var canvas,
 	context,
-	Game, 
+	Game,
 	Snake,
 	Food,
 	Direction;
 
 
 
-canvas = document.createElement( 'canvas' );
-canvas.width = 500;
-canvas.height = 500;
-context = canvas.getContext( '2d' );
-document.body.appendChild( canvas );
+canvas = document.createElement('canvas');
+canvas.width = 800;
+canvas.height = 600;
+context = canvas.getContext('2d');
+document.body.appendChild(canvas);
 
 
 
-;Game = (function () {
+Game = (function() {
 
 	var ready = false;
 
-	function start () {
-		ready = true;
-	}
+	var blockSize = 20;
 
-	function stop () {
+	var mapFillStyle = '#0D0D0D';
+
+	var mapStrokeStyle = '#002608';
+
+	function start() {
+		ready = true;
+	};
+
+	function stop() {
 		ready = false;
-	}
+	};
+
+	function getBlockSize() {
+		return blockSize;
+	};
+
+	function applyStyle(ctx, x, y) {
+		ctx.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
+		ctx.lineWidth = .5;
+		ctx.strokeRect(x * blockSize, y * blockSize, blockSize, blockSize);
+	};
+
+	function isReady() {
+		return ready;
+	};
+
+	function clearMap() {
+		context.fillStyle = mapFillStyle;
+		context.strokeStyle = mapStrokeStyle;
+		for (var x = canvas.width - blockSize; x >= 0; x--) {
+			for (var y = canvas.height - blockSize; y >= 0; y--) {
+				applyStyle(context, x, y);
+			};
+		};
+	};
+
+	function showStartText() {
+		context.font = "bold 35px sans-serif";
+		context.fillStyle = '#FFFFFF';
+		context.fillText("Press space bar to start!", canvas.width / 4, canvas.height / 2);
+	};
 
 	return {
 		// initial FPS/Speed of the game
-		FPS: 20,
+		FPS: 50,
 
 		start: start,
 
 		stop: stop,
 
-		isReady: function isReady () {
-			return ready;
-		},
+		blockSize: getBlockSize,
 
-		clearMap: function clearMap () {
-			context.fillStyle = '#0D0D0D';
-			context.strokeStyle = '#000F03';
-			for (var x = canvas.width - 1; x >= 0; x--) {
-				for (var y = canvas.height - 1; y >= 0; y--) {
-					context.fillRect(x * Snake.segmentSize, y * Snake.segmentSize, Snake.segmentSize, Snake.segmentSize);
-				    context.lineWidth = .5;
-				    context.strokeRect(x * Snake.segmentSize, y * Snake.segmentSize, Snake.segmentSize, Snake.segmentSize);		
-				};
-			};
-		},
+		isReady: isReady,
 
-		showStartText: function showStartText () {
-			context.font = "bold 35px sans-serif";
-			context.fillText("Press space bar to start!", canvas.width / Snake.segmentSize, canvas.height / 2);
-		},
+		clearMap: clearMap,
+
+		showStartText: showStartText,
+
+		applyStyle: applyStyle
 	};
 }());
 
 
 
-;Direction = (function () {
+;
+Direction = (function() {
 	return {
 		// keycode mappings for the arrow keys
 		LEFT: 37,
@@ -87,16 +113,98 @@ document.body.appendChild( canvas );
 
 
 
-;Food = (function () {
+Food = (function() {
 
+	var foodFillStyle = '#FF6363';
+	var foodStrokeStyle = '#FFA8A8';
+
+	var x = null;
+	var y = null;
+
+	var consumed = true;
+
+	function generateRandomCoordinates() {
+		var x = Math.floor(Math.random() * (canvas.width / Game.blockSize()));
+		var y = Math.floor(Math.random() * (canvas.height / Game.blockSize()));
+		return {
+			x: x,
+			y: y
+		};
+	};
+
+	function isValidCoordinates(x, y, snakeSegments) {
+		var valid = true;
+
+		for (var i = snakeSegments.length - 1; i >= 0; i--) {
+			if (snakeSegments[i].x === x && snakeSegments[i].y === y) {
+				valid = false;
+				break;
+			}
+		};
+
+		return valid;
+	}
+
+	function generateValidCoordinates(snakeSegments) {
+		var haventFoundAValidCoordinates = true;
+		var coordinates;
+		while (haventFoundAValidCoordinates) {
+			coordinates = generateRandomCoordinates();
+			if (isValidCoordinates(coordinates.x, coordinates.y, snakeSegments)) {
+				haventFoundAValidCoordinates = false;
+				break;
+			}
+		}
+		x = coordinates.x;
+		y = coordinates.y;
+	};
+
+	function checkIfConsumed(snakeSegments) {
+		for (var i = snakeSegments.length - 1; i >= 0; i--) {
+			var snakeX = snakeSegments[i].x;
+			var snakeY = snakeSegments[i].y;
+			if (x === snakeX && y === snakeY) {
+				consumed = true;
+				break;
+			}
+		};
+	};
+
+	function draw(snakeSegments) {
+
+		checkIfConsumed(snakeSegments);
+
+		if (consumed) {
+			generateValidCoordinates(snakeSegments);
+			consumed = false;
+		}
+
+		context.fillStyle = foodFillStyle;
+		context.strokeStyle = foodStrokeStyle;
+
+		Game.applyStyle(context, x, y);
+	};
+
+	function init(snakeSegments) {
+		generateValidCoordinates(snakeSegments);
+	};
+
+
+	function consumed() {
+		return consumed;
+	};
+
+	return {
+		consumed: consumed,
+		draw: draw,
+		init: init
+	};
 }());
 
 
 
-;Snake = (function () {
-
-	//size of a single segment
-	var segmentSize = 10;
+;
+Snake = (function() {
 
 	//initial size of the snake
 	var segmentCount = 5;
@@ -109,18 +217,21 @@ document.body.appendChild( canvas );
 
 	var newDirection = Direction.RIGHT;
 
-	var snakeColor = '#FFFFFF';
+	var snakeFillStyle = '#FFFFFF';
 
-	function head () {
+	var snakeStrokeStyle = '#D1D1D1';
+
+	function head() {
 		return segments[0];
 	};
 
-	function fillSegment (segment) {
-		context.fillStyle = snakeColor;
-		context.fillRect(segment.x * segmentSize, segment.y * segmentSize, segmentSize, segmentSize);				
+	function fillSegment(segment) {
+		context.fillStyle = snakeFillStyle;
+		context.strokeStyle = snakeStrokeStyle;
+		Game.applyStyle(context, segment.x, segment.y);
 	};
 
-	function getNextHeadBasedOnDirection () {
+	function getNextHeadBasedOnDirection() {
 		var x = head().x;
 		var y = head().y;
 		switch (newDirection) {
@@ -151,10 +262,13 @@ document.body.appendChild( canvas );
 			default:
 				break;
 		};
-		return {x: x, y: y};
+		return {
+			x: x,
+			y: y
+		};
 	};
 
-	function setDirection (keyCode) {
+	function setDirection(keyCode) {
 		switch (keyCode) {
 			case Direction.RIGHT:
 				if (direction !== Direction.LEFT) {
@@ -181,20 +295,23 @@ document.body.appendChild( canvas );
 		};
 	};
 
-	function init () {
+	function init() {
 		segments = [];
 		direction = Direction.RIGHT;
 		newDirection = Direction.RIGHT;
 		for (var i = segmentCount - 1; i >= 0; i--) {
-			segments.push({x: i, y: 0});
+			segments.push({
+				x: i,
+				y: 0
+			});
 		};
 	};
 
 	/*
-	*	updates the values of snake such as direction, etc etc. 
-	* 	according to user-input
-	*/
-	function update () {
+	 *	updates the values of snake such as direction, etc etc.
+	 * 	according to user-input
+	 */
+	function update() {
 		var nextHead = getNextHeadBasedOnDirection();
 		var tail = segments.pop();
 		tail.x = nextHead.x;
@@ -203,37 +320,40 @@ document.body.appendChild( canvas );
 	};
 
 	/*
-	*	draws the snake using the updated values
-	*/
-	function draw () {
+	 *	draws the snake using the updated values
+	 */
+	function draw() {
 		for (var i = segments.length - 1; i >= 0; i--) {
 			fillSegment(segments[i]);
 		};
 	};
 
-	function collided () {
+	function collided() {
 		var nextHead = getNextHeadBasedOnDirection();
 		var collided = false;
 
 		//self collision
 		for (var i = segments.length - 1; i >= 0; i--) {
-			var s = segments[i];
-			if (nextHead.x === s.x && nextHead.y === s.y) {
+			if (nextHead.x === segments[i].x && nextHead.y === segments[i].y) {
 				collided = true;
 				break;
 			}
 		};
 
-		if (nextHead.x * segmentSize > canvas.width - segmentSize || nextHead.x < 0) {
+		if (nextHead.x * Game.blockSize() > canvas.width - Game.blockSize() || nextHead.x < 0) {
 			collided = true;
 		}
 
-		if (nextHead.y * segmentSize > canvas.height - segmentSize || nextHead.y < 0) {
+		if (nextHead.y * Game.blockSize() > canvas.height - Game.blockSize() || nextHead.y < 0) {
 			collided = true;
 		}
 
 
 		return collided;
+	}
+
+	function getSegments() {
+		return segments;
 	}
 
 	return {
@@ -242,11 +362,10 @@ document.body.appendChild( canvas );
 		init: init,
 		setDirection: setDirection,
 		collided: collided,
-		segmentSize: segmentSize
+		segments: getSegments
 	};
 
 })();
-
 
 
 
@@ -262,7 +381,7 @@ var registerKeyListeners = function() {
 
 
 var gameLoop = function() {
-	setTimeout(function () {
+	setTimeout(function() {
 		var requestId = requestAnimationFrame(gameLoop);
 		if (Game.isReady()) {
 			Game.clearMap();
@@ -278,11 +397,11 @@ var gameLoop = function() {
 			Snake.draw();
 			Game.showStartText();
 		}
-		
+
+		Food.draw(Snake.segments());
+
 	}, 1000 / Game.FPS);
 };
-
-
 
 registerKeyListeners();
 gameLoop();
