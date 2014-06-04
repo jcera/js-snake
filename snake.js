@@ -177,6 +177,7 @@ Food = (function() {
 		if (consumed) {
 			generateValidCoordinates(snakeSegments);
 			consumed = false;
+			Snake.grow();
 		}
 
 		context.fillStyle = foodFillStyle;
@@ -186,7 +187,15 @@ Food = (function() {
 	};
 
 	function init(snakeSegments) {
-		generateValidCoordinates(snakeSegments);
+		if (consumed) {
+			generateValidCoordinates(snakeSegments);
+			consumed = false;	
+		}
+
+		context.fillStyle = foodFillStyle;
+		context.strokeStyle = foodStrokeStyle;
+
+		Game.applyStyle(context, x, y);
 	};
 
 
@@ -220,6 +229,8 @@ Snake = (function() {
 	var snakeFillStyle = '#FFFFFF';
 
 	var snakeStrokeStyle = '#D1D1D1';
+
+	var shouldGrow = false;
 
 	function head() {
 		return segments[0];
@@ -313,10 +324,16 @@ Snake = (function() {
 	 */
 	function update() {
 		var nextHead = getNextHeadBasedOnDirection();
-		var tail = segments.pop();
-		tail.x = nextHead.x;
-		tail.y = nextHead.y;
-		segments.unshift(tail);
+		if (shouldGrow) {
+			segments.unshift(nextHead);
+			shouldGrow = false;
+		} else {
+			var tail = segments.pop();
+			tail.x = nextHead.x;
+			tail.y = nextHead.y;
+			segments.unshift(tail);
+		}
+		
 	};
 
 	/*
@@ -348,13 +365,17 @@ Snake = (function() {
 			collided = true;
 		}
 
-
 		return collided;
-	}
+	};
 
 	function getSegments() {
 		return segments;
 	}
+
+
+	function grow() {
+		shouldGrow = true;
+	};
 
 	return {
 		update: update,
@@ -362,7 +383,8 @@ Snake = (function() {
 		init: init,
 		setDirection: setDirection,
 		collided: collided,
-		segments: getSegments
+		segments: getSegments,
+		grow: grow
 	};
 
 })();
@@ -390,15 +412,17 @@ var gameLoop = function() {
 			} else {
 				Snake.update();
 				Snake.draw();
+				Food.draw(Snake.segments());
 			}
 		} else {
 			Game.clearMap();
 			Snake.init();
 			Snake.draw();
+			Food.init(Snake.segments());
 			Game.showStartText();
 		}
 
-		Food.draw(Snake.segments());
+		
 
 	}, 1000 / Game.FPS);
 };
