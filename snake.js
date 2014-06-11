@@ -124,11 +124,9 @@ Food = (function() {
 	var consumed = true;
 
 	function generateRandomCoordinates() {
-		var x = Math.floor(Math.random() * (canvas.width / Game.blockSize()));
-		var y = Math.floor(Math.random() * (canvas.height / Game.blockSize()));
 		return {
-			x: x,
-			y: y
+			x: Math.floor(Math.random() * (canvas.width / Game.blockSize())),
+			y: Math.floor(Math.random() * (canvas.height / Game.blockSize()))
 		};
 	};
 
@@ -143,7 +141,7 @@ Food = (function() {
 		return valid;
 	}
 
-	function generateValidCoordinates(snakeSegments) {
+	function generateValidCoordinates() {
 		var haventFoundAValidCoordinates = true;
 		var coordinates;
 		while (haventFoundAValidCoordinates) {
@@ -288,24 +286,20 @@ Snake = (function() {
 	function setDirection(keyCode) {
 		switch (keyCode) {
 			case Direction.RIGHT:
-				if (direction !== Direction.LEFT) {
+				if (direction !== Direction.LEFT)
 					newDirection = Direction.RIGHT;
-				}
 				break;
 			case Direction.LEFT:
-				if (direction != Direction.RIGHT) {
+				if (direction != Direction.RIGHT)
 					newDirection = Direction.LEFT;
-				}
 				break;
 			case Direction.UP:
-				if (direction !== Direction.DOWN) {
+				if (direction !== Direction.DOWN)
 					newDirection = Direction.UP;
-				}
 				break;
 			case Direction.DOWN:
-				if (direction !== Direction.UP) {
+				if (direction !== Direction.UP)
 					newDirection = Direction.DOWN;
-				}
 				break;
 			default:
 				break;
@@ -361,16 +355,13 @@ Snake = (function() {
 			}
 		});
 
-
 		// x-wall collision
-		if (nextHead.x * Game.blockSize() > canvas.width - Game.blockSize() || nextHead.x < 0) {
+		if (nextHead.x * Game.blockSize() > canvas.width - Game.blockSize() || nextHead.x < 0)
 			collided = true;
-		}
 
 		//y-wall collision
-		if (nextHead.y * Game.blockSize() > canvas.height - Game.blockSize() || nextHead.y < 0) {
+		if (nextHead.y * Game.blockSize() > canvas.height - Game.blockSize() || nextHead.y < 0)
 			collided = true;
-		}
 
 		return collided;
 	};
@@ -429,8 +420,6 @@ var gameLoop = function() {
 			Food.init();
 			Game.showStartText();
 		}
-
-
 
 	}, 1000 / Game.FPS);
 };
