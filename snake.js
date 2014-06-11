@@ -132,16 +132,14 @@ Food = (function() {
 		};
 	};
 
-	function isValidCoordinates(x, y, snakeSegments) {
+	function isValidCoordinates(x, y) {
 		var valid = true;
-
-		for (var i = snakeSegments.length - 1; i >= 0; i--) {
-			if (snakeSegments[i].x === x && snakeSegments[i].y === y) {
+		Snake.forEachSnakeSegment(function(segment) {
+			if (segment.x === x && segment.y === y) {
 				valid = false;
-				break;
+				this.break;
 			}
-		};
-
+		});
 		return valid;
 	}
 
@@ -150,7 +148,7 @@ Food = (function() {
 		var coordinates;
 		while (haventFoundAValidCoordinates) {
 			coordinates = generateRandomCoordinates();
-			if (isValidCoordinates(coordinates.x, coordinates.y, snakeSegments)) {
+			if (isValidCoordinates(coordinates.x, coordinates.y)) {
 				haventFoundAValidCoordinates = false;
 				break;
 			}
@@ -159,23 +157,23 @@ Food = (function() {
 		y = coordinates.y;
 	};
 
-	function checkIfConsumed(snakeSegments) {
-		for (var i = snakeSegments.length - 1; i >= 0; i--) {
-			var snakeX = snakeSegments[i].x;
-			var snakeY = snakeSegments[i].y;
+	function checkIfConsumed() {
+		Snake.forEachSnakeSegment(function(segment) {
+			var snakeX = segment.x;
+			var snakeY = segment.y;
 			if (x === snakeX && y === snakeY) {
 				consumed = true;
-				break;
+				this.break;
 			}
-		};
+		});
 	};
 
-	function draw(snakeSegments) {
+	function draw() {
 
-		checkIfConsumed(snakeSegments);
+		checkIfConsumed();
 
 		if (consumed) {
-			generateValidCoordinates(snakeSegments);
+			generateValidCoordinates();
 			consumed = false;
 			Snake.grow();
 		}
@@ -186,10 +184,10 @@ Food = (function() {
 		Game.applyStyle(context, x, y);
 	};
 
-	function init(snakeSegments) {
+	function init() {
 		if (consumed) {
-			generateValidCoordinates(snakeSegments);
-			consumed = false;	
+			generateValidCoordinates();
+			consumed = false;
 		}
 
 		context.fillStyle = foodFillStyle;
@@ -216,7 +214,7 @@ Food = (function() {
 Snake = (function() {
 
 	//initial size of the snake
-	var segmentCount = 5;
+	var initialSnakeSize = 5;
 
 	//a queue data struct for the body of the snake
 	var segments = [];
@@ -235,6 +233,14 @@ Snake = (function() {
 	function head() {
 		return segments[0];
 	};
+
+	function forEachSnakeSegment(action) {
+		if (action && action.length == 1) {
+			for (var i = segments.length - 1; i >= 0; i--) {
+				action(segments[i]);
+			};
+		}
+	}
 
 	function fillSegment(segment) {
 		context.fillStyle = snakeFillStyle;
@@ -310,7 +316,7 @@ Snake = (function() {
 		segments = [];
 		direction = Direction.RIGHT;
 		newDirection = Direction.RIGHT;
-		for (var i = segmentCount - 1; i >= 0; i--) {
+		for (var i = initialSnakeSize - 1; i >= 0; i--) {
 			segments.push({
 				x: i,
 				y: 0
@@ -333,16 +339,14 @@ Snake = (function() {
 			tail.y = nextHead.y;
 			segments.unshift(tail);
 		}
-		
+
 	};
 
 	/*
 	 *	draws the snake using the updated values
 	 */
 	function draw() {
-		for (var i = segments.length - 1; i >= 0; i--) {
-			fillSegment(segments[i]);
-		};
+		forEachSnakeSegment(fillSegment);
 	};
 
 	function collided() {
@@ -350,17 +354,20 @@ Snake = (function() {
 		var collided = false;
 
 		//self collision
-		for (var i = segments.length - 1; i >= 0; i--) {
-			if (nextHead.x === segments[i].x && nextHead.y === segments[i].y) {
+		forEachSnakeSegment(function(segment) {
+			if (nextHead.x === segment.x && nextHead.y === segment.y) {
 				collided = true;
-				break;
+				this.break;
 			}
-		};
+		});
 
+
+		// x-wall collision
 		if (nextHead.x * Game.blockSize() > canvas.width - Game.blockSize() || nextHead.x < 0) {
 			collided = true;
 		}
 
+		//y-wall collision
 		if (nextHead.y * Game.blockSize() > canvas.height - Game.blockSize() || nextHead.y < 0) {
 			collided = true;
 		}
@@ -384,7 +391,8 @@ Snake = (function() {
 		setDirection: setDirection,
 		collided: collided,
 		segments: getSegments,
-		grow: grow
+		grow: grow,
+		forEachSnakeSegment: forEachSnakeSegment
 	};
 
 })();
@@ -412,17 +420,17 @@ var gameLoop = function() {
 			} else {
 				Snake.update();
 				Snake.draw();
-				Food.draw(Snake.segments());
+				Food.draw();
 			}
 		} else {
 			Game.clearMap();
 			Snake.init();
 			Snake.draw();
-			Food.init(Snake.segments());
+			Food.init();
 			Game.showStartText();
 		}
 
-		
+
 
 	}, 1000 / Game.FPS);
 };
