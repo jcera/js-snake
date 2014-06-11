@@ -10,3 +10,5 @@ TODO:
 - Smoother gameloop
 - Snake speed increase per food consumption
 - Scoreboard
+
+Best viewed in Chrome or FireFox.
