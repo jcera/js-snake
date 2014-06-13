@@ -31,7 +31,6 @@ document.body.appendChild(canvas);
 
 
 Game = (function() {
-
 	var ready = false;
 
 	var blockSize = 20;
@@ -39,6 +38,8 @@ Game = (function() {
 	var mapFillStyle = '#0D0D0D';
 
 	var mapStrokeStyle = '#002608';
+
+	var score = 0;
 
 	function start() {
 		ready = true;
@@ -78,6 +79,11 @@ Game = (function() {
 		context.fillText("Press space bar to start!", canvas.width / 4, canvas.height / 2);
 	};
 
+	function showScore() {
+		context.font = "bold 18px sans-serif";
+		context.fillStyle = 'rgba(255, 255, 255, 0.3)';
+		context.fillText("Score: " + score, canvas.width - 120, canvas.height - 20);	
+	}
 	return {
 		// initial FPS/Speed of the game
 		FPS: 50,
@@ -94,7 +100,17 @@ Game = (function() {
 
 		showStartText: showStartText,
 
-		applyStyle: applyStyle
+		applyStyle: applyStyle,
+
+		showScore: showScore,
+
+		addScore : function() {
+			score++;
+		},
+
+		resetScore: function() {
+			score = 0;
+		}
 	};
 }());
 
@@ -171,6 +187,7 @@ Food = (function() {
 		checkIfConsumed();
 
 		if (consumed) {
+			Game.addScore();
 			generateValidCoordinates();
 			consumed = false;
 			Snake.grow();
@@ -408,6 +425,7 @@ var gameLoop = function() {
 			Game.clearMap();
 			if (Snake.collided()) {
 				Game.stop();
+				Game.resetScore();
 			} else {
 				Snake.update();
 				Snake.draw();
@@ -420,6 +438,7 @@ var gameLoop = function() {
 			Food.init();
 			Game.showStartText();
 		}
+		Game.showScore();
 
 	}, 1000 / Game.FPS);
 };
