@@ -9,6 +9,5 @@ Check it out: http://alexcera.github.io/js-snake/
 TODO:
 - Smoother gameloop
 - Snake speed increase per food consumption
-- Scoreboard
 
 Best viewed in Chrome or FireFox.
