@@ -15,6 +15,7 @@ js-snake
 - `HTML5 canvas`
 - `CSS/CSS3`
 - `javascript`
+- `Grunt`
 
 <br/>
 ####TODO
