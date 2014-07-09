@@ -9,7 +9,7 @@ if (!window.requestAnimationFrame) {
                 window.setTimeout(callback, 1000 / 60);
             };
     })();
-};
+}
 
 (function(w) {
 
@@ -30,7 +30,7 @@ if (!window.requestAnimationFrame) {
         _ready = true;
     };
 
-    Game.prototype.stop = function() {
+    Game.prototype.pause = function() {
         _ready = false;
     };
 
@@ -48,8 +48,8 @@ if (!window.requestAnimationFrame) {
         for (var x = canvas.width - _blockSize; x >= 0; x--) {
             for (var y = canvas.height - _blockSize; y >= 0; y--) {
                 this.applyStyle(context, x, y);
-            };
-        };
+            }
+        }
     };
 
     Game.prototype.showStartText = function() {
@@ -66,7 +66,7 @@ if (!window.requestAnimationFrame) {
 
     Game.prototype.applyStyle = function applyStyle(ctx, x, y) {
         ctx.fillRect(x * _blockSize, y * _blockSize, _blockSize, _blockSize);
-        ctx.lineWidth = .5;
+        ctx.lineWidth = 0.5;
         ctx.strokeRect(x * _blockSize, y * _blockSize, _blockSize, _blockSize);
     };
 
@@ -102,18 +102,18 @@ if (!window.requestAnimationFrame) {
             x: Math.floor(Math.random() * (canvas.width / game.blockSize())),
             y: Math.floor(Math.random() * (canvas.height / game.blockSize()))
         };
-    };
+    }
 
     function isValidCoordinates(x, y) {
         var valid = true;
         snake.forEachSegment(function(segment) {
             if (segment.x === x && segment.y === y) {
                 valid = false;
-                this.break;
+                return true;
             }
         });
         return valid;
-    };
+    }
 
     function generateValidCoordinates() {
         var coordinates;
@@ -125,18 +125,16 @@ if (!window.requestAnimationFrame) {
         		break;
             }
         }
-    };
+    }
 
     function checkIfConsumed() {
         snake.forEachSegment(function(segment) {
-            var snakeX = segment.x,
-                snakeY = segment.y;
-            if (_x === snakeX && _y === snakeY) {
+            if (_x === segment.x && _y === segment.y) {
                 _consumed = true;
-                this.break;
+                return true;
             }
         });
-    };
+    }
 
     Food.prototype.consumed = function() {
         return _consumed;
@@ -194,13 +192,13 @@ snake = (function(w) {
 
     function head() {
         return _segments[0];
-    };
+    }
 
     function fillSegment(segment) {
         context.fillStyle = _snakeFillStyle;
         context.strokeStyle = _snakeStrokeStyle;
         game.applyStyle(context, segment.x, segment.y);
-    };
+    }
 
     function forDirection(key, fn) {
     	fn = fn || function() {};
@@ -211,7 +209,7 @@ snake = (function(w) {
                 break;
             case 38:
                 if (_direction !== 40)
-                    fn(key, 0, -1)
+                    fn(key, 0, -1);
                 break;
             case 39:
                 if (_direction !== 37)
@@ -223,8 +221,8 @@ snake = (function(w) {
                 break;
             default:
                 break;
-        };
-    };
+        }
+    }
 
     function getNextHeadBasedOnDirection() {
         var x = head().x,
@@ -238,7 +236,7 @@ snake = (function(w) {
             x: x,
             y: y
         };
-    };
+    }
 
     Snake.prototype.collided = function() {
         var nextHead = getNextHeadBasedOnDirection(),
@@ -248,7 +246,7 @@ snake = (function(w) {
         this.forEachSegment(function(segment) {
             if (nextHead.x === segment.x && nextHead.y === segment.y) {
                 collided = true;
-                this.break;
+                return true;
             }
         });
 
@@ -263,9 +261,6 @@ snake = (function(w) {
         return collided;
     };
 
-    /*
-     *	draws the snake using the updated values
-     */
     Snake.prototype.draw = function() {
         this.forEachSegment(fillSegment);
     };
@@ -273,8 +268,8 @@ snake = (function(w) {
     Snake.prototype.forEachSegment = function(fn) {
         if (fn && fn.length == 1) {
             for (var i = _segments.length - 1; i >= 0; i--) {
-                fn(_segments[i]);
-            };
+                if (fn(_segments[i])) break;
+            }
         }
     };
 
@@ -287,7 +282,7 @@ snake = (function(w) {
                 x: i,
                 y: 0
             });
-        };
+        }
     };
 
     Snake.prototype.grow = function() {
@@ -319,7 +314,6 @@ snake = (function(w) {
             tail.y = nextHead.y;
             _segments.unshift(tail);
         }
-
     };
 
     return Snake;
@@ -356,7 +350,7 @@ var gameLoop = function() {
         if (game.isReady()) {
             game.clearMap();
             if (snake.collided()) {
-                game.stop();
+                game.pause();
                 game.resetScore();
             } else {
                 snake.update();
@@ -371,7 +365,6 @@ var gameLoop = function() {
             game.showStartText();
         }
         game.showScore();
-
     }, 1000 / game.FPS);
 };
 
