@@ -18,7 +18,6 @@ if (!window.requestAnimationFrame) {
         _mapFillStyle = '#0D0D0D',
         _mapStrokeStyle = '#002608',
         _score = 0,
-
         Game = w.Game = function() {
             if (!this instanceof arguments.callee)
                 return new Game();
@@ -91,7 +90,6 @@ if (!window.requestAnimationFrame) {
         _x = null,
         _y = null,
         _consumed = true,
-
         Food = w.Food = function() {
             if (!this instanceof arguments.callee)
                 return new Food();
@@ -121,8 +119,8 @@ if (!window.requestAnimationFrame) {
             coordinates = generateRandomCoordinates();
             if (isValidCoordinates(coordinates.x, coordinates.y)) {
                 _x = coordinates.x;
-        		_y = coordinates.y;
-        		break;
+                _y = coordinates.y;
+                break;
             }
         }
     }
@@ -131,9 +129,15 @@ if (!window.requestAnimationFrame) {
         snake.forEachSegment(function(segment) {
             if (_x === segment.x && _y === segment.y) {
                 _consumed = true;
-                return true;
+                return _consumed;
             }
         });
+    }
+
+    function styledContext() {
+        context.fillStyle = _foodFillStyle;
+        context.strokeStyle = _foodStrokeStyle;
+        return context;
     }
 
     Food.prototype.consumed = function() {
@@ -150,11 +154,7 @@ if (!window.requestAnimationFrame) {
             _consumed = false;
             snake.grow();
         }
-
-        context.fillStyle = _foodFillStyle;
-        context.strokeStyle = _foodStrokeStyle;
-
-        game.applyStyle(context, _x, _y);
+        game.applyStyle(styledContext(), _x, _y);
     };
 
     Food.prototype.init = function() {
@@ -162,10 +162,6 @@ if (!window.requestAnimationFrame) {
             generateValidCoordinates();
             _consumed = false;
         }
-
-        context.fillStyle = _foodFillStyle;
-        context.strokeStyle = _foodStrokeStyle;
-
         game.applyStyle(context, _x, _y);
     };
 
@@ -174,7 +170,7 @@ if (!window.requestAnimationFrame) {
 
 
 
-snake = (function(w) {
+(function(w) {
 
     //initial size of the snake
     var _initialsnakeSize = 5,
@@ -201,7 +197,7 @@ snake = (function(w) {
     }
 
     function forDirection(key, fn) {
-    	fn = fn || function() {};
+        fn = fn || function() {};
         switch (key) {
             case 37:
                 if (_direction != 39)
@@ -268,7 +264,8 @@ snake = (function(w) {
     Snake.prototype.forEachSegment = function(fn) {
         if (fn && fn.length == 1) {
             for (var i = _segments.length - 1; i >= 0; i--) {
-                if (fn(_segments[i])) break;
+                if (fn(_segments[i])) 
+                    break;
             }
         }
     };
@@ -300,8 +297,8 @@ snake = (function(w) {
     };
 
     /*
-     *	updates the values of snake such as direction, etc etc.
-     * 	according to user-input
+     *  updates the values of snake such as direction, etc etc.
+     *  according to user-input
      */
     Snake.prototype.update = function() {
         var nextHead = getNextHeadBasedOnDirection();
@@ -342,13 +339,11 @@ var registerKeyListeners = function() {
     }, false);
 };
 
-
-
 var gameLoop = function() {
     setTimeout(function() {
         var requestId = requestAnimationFrame(gameLoop);
+        game.clearMap();
         if (game.isReady()) {
-            game.clearMap();
             if (snake.collided()) {
                 game.pause();
                 game.resetScore();
@@ -358,7 +353,6 @@ var gameLoop = function() {
                 food.draw();
             }
         } else {
-            game.clearMap();
             snake.init();
             snake.draw();
             food.init();
@@ -367,6 +361,7 @@ var gameLoop = function() {
         game.showScore();
     }, 1000 / game.FPS);
 };
+
 
 registerKeyListeners();
 gameLoop();
