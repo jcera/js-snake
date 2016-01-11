@@ -7,7 +7,7 @@ js-snake
 
 <br/>
 ####Where can I see it?
-[Live Demo](http://xandercera.github.io/js-snake/)
+[Live Demo](http://jcera.github.io/js-snake/)
 >Best viewed in [Chrome](https://www.google.com/intl/en_sg/chrome/browser/), [Firefox](http://www.mozilla.org/en-US/firefox/new/), [Safari](https://www.apple.com/sg/safari/)
 
 <br/>
